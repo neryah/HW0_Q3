@@ -91,7 +91,7 @@ public class Wallet {
      *          changes nothing
      * @return the amount actually paid, 0 if amount could not be obtained
      */
-    public double payExactMaximum(double sum) {
+    public double payExactMaximum(double sum) {//Dynamic programming implementation
         if (sum<=0){
             return 0;
         }
@@ -101,36 +101,33 @@ public class Wallet {
         int newSum = (int)(20*sum);
         int sumToNumOfCoins[] = new int[newSum + 1];
         Arrays.fill(sumToNumOfCoins, 0);
-        int sumToNumOfCoinsTmp[] = new int[newSum + 1];
-        Arrays.fill(sumToNumOfCoinsTmp, 0);
+        int sumToNumOfCoinsRes[] = new int[newSum + 1];
+        Arrays.fill(sumToNumOfCoinsRes, 0);
         for (Map.Entry<Double, ArrayList<Coin>> pair : coins.entrySet()) {
-            for(int numOfCoin = 1; numOfCoin <= pair.getValue().size(); numOfCoin++){
-                sumToNumOfCoins = Arrays.copyOf(sumToNumOfCoinsTmp, sumToNumOfCoinsTmp.length);
+            for(int numOfCoin = 0; numOfCoin < pair.getValue().size(); numOfCoin++){
+                sumToNumOfCoins = Arrays.copyOf(sumToNumOfCoinsRes, sumToNumOfCoinsRes.length);
                 for(int s = 0; s <= newSum; s++){
                     int i = (int)(s - 20*pair.getKey());
                     if(i >= 0){
-                        sumToNumOfCoinsTmp[s] = (sumToNumOfCoins[i] > 0 || i == 0 && 1 + sumToNumOfCoins[i]>sumToNumOfCoins[s]) ?
+                        sumToNumOfCoinsRes[s] = ((sumToNumOfCoins[i] > 0 || i == 0) && ((1 + sumToNumOfCoins[i])>sumToNumOfCoins[s])) ?
                                 1 + sumToNumOfCoins[i] : sumToNumOfCoins[s];
-                        System.out.println(" i is: " + i + " sumToNumOfCoins[i] is: " + sumToNumOfCoins[i] + "||| s is: " + s + " sumToNumOfCoinsTmp[s] is: " + sumToNumOfCoinsTmp[s]);
                     }
                 }
-            }
         }
-        System.out.println("sumToNumOfCoins[newSum] is " + sumToNumOfCoins[newSum]);
-        if(sumToNumOfCoins[newSum] == 0){
-            //System.out.println("111");
+          }
+        if(sumToNumOfCoinsRes[newSum] == 0){
             return 0;
         }
         int cur = newSum;
 
 
-        while(cur >= 0){
+        while(cur > 0){
             for(Iterator<Map.Entry<Double, ArrayList<Coin>>> it = coins.entrySet().iterator(); it.hasNext(); ) {
                 Map.Entry<Double, ArrayList<Coin>> pair = it.next();
+
                 int i = (int)(cur - 20*pair.getKey());
-                System.out.println(pair.getKey());
                 if(i >= 0){
-                    if(sumToNumOfCoins[cur] == sumToNumOfCoins[i] + 1){
+                    if(sumToNumOfCoinsRes[cur] == sumToNumOfCoinsRes[i] + 1){
                         pair.getValue().remove(0);
                         if(pair.getValue().isEmpty()){
                             it.remove();
