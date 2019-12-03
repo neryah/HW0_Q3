@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Arrays;
+import java.util.Iterator;
 /**
  * A wallet can contain a number of coins. There could be several coins of the same value, 
  * but the same coin cannot appear in the wallet twice
@@ -52,12 +53,15 @@ public class Wallet {
         }
         double diff = sum;
         ArrayList<Double> keys = new ArrayList<Double>(coins.keySet());
-        for(int i=keys.size()-1; diff>=0;i--){
+        for(int i=keys.size()-1; diff>=0 && i>=0 ;i--) {
             double key = keys.get(i);
             ArrayList<Coin> oneValue = coins.get(key);
-            for(;diff>=0 && !oneValue.isEmpty(); diff -= key, oneValue.remove(0)){}
+            for(;diff>0 && !oneValue.isEmpty(); diff -= key, oneValue.remove(0)){}
             if(oneValue.isEmpty()){
                 coins.remove(key);
+            }
+            if (diff <= 0) {
+                break;
             }
         }
         return sum - diff;
@@ -97,30 +101,39 @@ public class Wallet {
         int newSum = (int)(20*sum);
         int sumToNumOfCoins[] = new int[newSum + 1];
         Arrays.fill(sumToNumOfCoins, 0);
-        Arrays.fill(sumToNumOfCoins, 0);
+        int sumToNumOfCoinsTmp[] = new int[newSum + 1];
+        Arrays.fill(sumToNumOfCoinsTmp, 0);
         for (Map.Entry<Double, ArrayList<Coin>> pair : coins.entrySet()) {
             for(int numOfCoin = 1; numOfCoin <= pair.getValue().size(); numOfCoin++){
+                sumToNumOfCoins = Arrays.copyOf(sumToNumOfCoinsTmp, sumToNumOfCoinsTmp.length);
                 for(int s = 0; s <= newSum; s++){
                     int i = (int)(s - 20*pair.getKey());
                     if(i >= 0){
-                        sumToNumOfCoins[s] = (sumToNumOfCoins[i] > 0 && 1 + sumToNumOfCoins[i]>sumToNumOfCoins[s]) ?
+                        sumToNumOfCoinsTmp[s] = (sumToNumOfCoins[i] > 0 || i == 0 && 1 + sumToNumOfCoins[i]>sumToNumOfCoins[s]) ?
                                 1 + sumToNumOfCoins[i] : sumToNumOfCoins[s];
+                        System.out.println(" i is: " + i + " sumToNumOfCoins[i] is: " + sumToNumOfCoins[i] + "||| s is: " + s + " sumToNumOfCoinsTmp[s] is: " + sumToNumOfCoinsTmp[s]);
                     }
                 }
             }
         }
+        System.out.println("sumToNumOfCoins[newSum] is " + sumToNumOfCoins[newSum]);
         if(sumToNumOfCoins[newSum] == 0){
+            //System.out.println("111");
             return 0;
         }
         int cur = newSum;
+
+
         while(cur >= 0){
-            for (Map.Entry<Double, ArrayList<Coin>> pair : coins.entrySet()){
+            for(Iterator<Map.Entry<Double, ArrayList<Coin>>> it = coins.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<Double, ArrayList<Coin>> pair = it.next();
                 int i = (int)(cur - 20*pair.getKey());
+                System.out.println(pair.getKey());
                 if(i >= 0){
                     if(sumToNumOfCoins[cur] == sumToNumOfCoins[i] + 1){
                         pair.getValue().remove(0);
                         if(pair.getValue().isEmpty()){
-                            coins.remove(pair.getKey());
+                            it.remove();
                         }
                         cur = i;
                     }
@@ -162,9 +175,7 @@ public class Wallet {
      * 			if called
      */
     public void emptyWallet() {
-        for (Map.Entry<Double, ArrayList<Coin>> pair : coins.entrySet()) {
-            coins.remove(pair.getKey());
-        }
+        coins.clear();
     }
 
 
